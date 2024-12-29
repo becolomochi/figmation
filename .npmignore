@@ -1,0 +1,36 @@
+# Source
+src/
+tests/
+__tests__/
+
+# Config files
+.tool-versions
+.gitignore
+.prettierrc
+.eslintrc.json
+tsconfig.json
+jest.config.js
+
+# Development files
+coverage/
+*.test.ts
+*.spec.ts
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.* 
