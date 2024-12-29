@@ -104,9 +104,11 @@ describe('Figmation', () => {
       ];
 
       const figmation = new Figmation();
-      await expect(figmation.writeCSS(variables, 'default', { 
-        filePath: 'error/test/file.css'  // Specify a non-existent directory path
-      })).rejects.toThrow();
+      await expect(
+        figmation.writeCSS(variables, 'default', {
+          filePath: 'error/test/file.css', // Specify a non-existent directory path
+        }),
+      ).rejects.toThrow();
     });
   });
 
@@ -188,7 +190,7 @@ describe('Figmation', () => {
       ];
 
       await figmation.writeCSS(variables, 'default', {
-        filePath: join(testOutputPath, testFilename)
+        filePath: join(testOutputPath, testFilename),
       });
 
       const filePath = join(testOutputPath, testFilename);
@@ -289,7 +291,7 @@ describe('Figmation', () => {
           value: '16',
           scope: 'FONT_SIZE',
           hidden: false,
-        }
+        },
       ];
 
       const pxCSS = figmation.generateCSS(variables, 'default', { unit: 'px' });
@@ -298,7 +300,10 @@ describe('Figmation', () => {
       const remCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 16 });
       expect(remCSS).toContain('--font-size-body: 1rem');
 
-      const customRemCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 10 });
+      const customRemCSS = figmation.generateCSS(variables, 'default', {
+        unit: 'rem',
+        baseFontSize: 10,
+      });
       expect(customRemCSS).toContain('--font-size-body: 1.6000rem');
     });
 
@@ -325,7 +330,7 @@ describe('Figmation', () => {
           value: '24',
           scope: 'FONT_SIZE',
           hidden: false,
-        }
+        },
       ];
 
       const remCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 16 });
@@ -333,7 +338,10 @@ describe('Figmation', () => {
       expect(remCSS).toContain('--font-size-small: 0.8750rem');
       expect(remCSS).toContain('--font-size-large: 1.5000rem');
 
-      const customRemCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 10 });
+      const customRemCSS = figmation.generateCSS(variables, 'default', {
+        unit: 'rem',
+        baseFontSize: 10,
+      });
       expect(customRemCSS).toContain('--font-size-body: 1.6000rem');
       expect(customRemCSS).toContain('--font-size-small: 1.4000rem');
       expect(customRemCSS).toContain('--font-size-large: 2.4000rem');
