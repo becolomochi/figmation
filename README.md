@@ -130,6 +130,47 @@ The package supports all Figma variable scopes and automatically applies appropr
   - WIDTH_HEIGHT (`--size-*`)
   - GAP (`--gap-*`)
 
+## Unit Conversion
+
+### px to rem Conversion
+
+You can convert pixel values to rem units by specifying options in the `generateFromFigma` method:
+
+```ts
+await figmation.generateFromFigma({
+  unit: 'rem',
+  baseFontSize: 16 // Default: 16
+});
+```
+
+This will convert pixel values to rem units:
+
+```css
+/* With unit: 'px' (default) */
+:root {
+  --font-size-body: 16px;
+  --font-size-small: 14px;
+  --font-size-large: 24px;
+}
+
+/* With unit: 'rem' */
+:root {
+  --font-size-body: 1rem;
+  --font-size-small: 0.8750rem;
+  --font-size-large: 1.5000rem;
+}
+```
+
+The conversion applies to the following variable scopes:
+
+- FONT_SIZE
+- LINE_HEIGHT
+- LETTER_SPACING
+- PARAGRAPH_SPACING
+- PARAGRAPH_INDENT
+- CORNER_RADIUS
+- GAP
+
 ## Development
 
 ```bash

@@ -43,6 +43,8 @@ export interface CSSGenerationOptions {
   prefix?: string;
   groupByCollection?: boolean;
   includeHidden?: boolean;
+  unit?: string;
+  baseFontSize?: number;
 }
 
 export interface FigmaVariable {

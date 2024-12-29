@@ -279,6 +279,65 @@ describe('Figmation', () => {
       const variables = figmation['convertFigmaVariables'](figmaVariables);
       expect(variables[0].scope).toBe('ALL_FILLS');
     });
+
+    it('should format values with different units', () => {
+      const figmation = new Figmation();
+      const variables: Variable[] = [
+        {
+          id: '1',
+          name: 'Typography/Body/Size',
+          value: '16',
+          scope: 'FONT_SIZE',
+          hidden: false,
+        }
+      ];
+
+      const pxCSS = figmation.generateCSS(variables, 'default', { unit: 'px' });
+      expect(pxCSS).toContain('--font-size-body: 16px');
+
+      const remCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 16 });
+      expect(remCSS).toContain('--font-size-body: 1rem');
+
+      const customRemCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 10 });
+      expect(customRemCSS).toContain('--font-size-body: 1.6000rem');
+    });
+
+    it('should format rem values with correct precision', () => {
+      const figmation = new Figmation();
+      const variables: Variable[] = [
+        {
+          id: '1',
+          name: 'Typography/Body/Size',
+          value: '16',
+          scope: 'FONT_SIZE',
+          hidden: false,
+        },
+        {
+          id: '2',
+          name: 'Typography/Small/Size',
+          value: '14',
+          scope: 'FONT_SIZE',
+          hidden: false,
+        },
+        {
+          id: '3',
+          name: 'Typography/Large/Size',
+          value: '24',
+          scope: 'FONT_SIZE',
+          hidden: false,
+        }
+      ];
+
+      const remCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 16 });
+      expect(remCSS).toContain('--font-size-body: 1rem');
+      expect(remCSS).toContain('--font-size-small: 0.8750rem');
+      expect(remCSS).toContain('--font-size-large: 1.5000rem');
+
+      const customRemCSS = figmation.generateCSS(variables, 'default', { unit: 'rem', baseFontSize: 10 });
+      expect(customRemCSS).toContain('--font-size-body: 1.6000rem');
+      expect(customRemCSS).toContain('--font-size-small: 1.4000rem');
+      expect(customRemCSS).toContain('--font-size-large: 2.4000rem');
+    });
   });
 
   describe('formatVariableName', () => {

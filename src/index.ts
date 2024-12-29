@@ -68,8 +68,16 @@ export class Figmation {
     return `--${prefix}-${formattedName}`;
   }
 
-  private formatVariableValue(value: any, scope: VariableScope): string {
+  private formatVariableValue(value: any, scope: VariableScope, options: CSSGenerationOptions = {}): string {
     const stringValue = value.toString();
+    const { unit = 'px', baseFontSize = 16 } = options;
+
+    const convertToRem = (px: number) => {
+      const remValue = px / baseFontSize;
+      return remValue % 1 === 0 
+        ? `${Math.floor(remValue)}rem` 
+        : `${remValue.toFixed(4)}rem`;
+    };
 
     switch (scope) {
       case 'FONT_SIZE':
@@ -79,7 +87,11 @@ export class Figmation {
       case 'PARAGRAPH_INDENT':
       case 'CORNER_RADIUS':
       case 'GAP':
-        return !isNaN(Number(stringValue)) ? `${stringValue}px` : stringValue;
+        if (!isNaN(Number(stringValue))) {
+          const numValue = Number(stringValue);
+          return unit === 'rem' ? convertToRem(numValue) : `${numValue}px`;
+        }
+        return stringValue;
       case 'OPACITY':
         return stringValue;
       default:
@@ -150,7 +162,7 @@ export class Figmation {
       .join('\n\n');
   }
 
-  public generateCSS(variables: Variable[], mode: string): string {
+  public generateCSS(variables: Variable[], mode: string, options: CSSGenerationOptions = {}): string {
     // Filter out hidden variables
     const visibleVariables = variables.filter(v => !v.hidden);
     const grouped = this.groupVariables(visibleVariables);
@@ -161,7 +173,7 @@ export class Figmation {
       group.variables.forEach((variable) => {
         const value = variable.valuesByMode?.[mode] || variable.value;
         if (value) {
-          const formattedValue = this.formatVariableValue(value, variable.scope); // Apply value formatting
+          const formattedValue = this.formatVariableValue(value, variable.scope, options);
           css += `  ${this.formatVariableName(variable.name, variable.scope)}: ${formattedValue};\n`;
         }
       });
