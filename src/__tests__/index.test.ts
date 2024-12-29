@@ -18,6 +18,14 @@ describe('Figmation', () => {
     });
   });
 
+  afterAll(() => {
+    // Clean up any generated files in root directory
+    const defaultFile = 'variables.default.css';
+    if (existsSync(defaultFile)) {
+      rmSync(defaultFile);
+    }
+  });
+
   describe('generateCSS', () => {
     test('should generate CSS with grouping', () => {
       const variables: Variable[] = [
@@ -37,7 +45,7 @@ describe('Figmation', () => {
         },
       ];
 
-      const css = figmation.generateCSS(variables);
+      const css = figmation.generateCSS(variables, 'default');
       const lines = css.split('\n');
 
       expect(lines).toContain('  --color-primary: #FF0000;');
@@ -68,7 +76,7 @@ describe('Figmation', () => {
         },
       ];
 
-      const css = figmation.generateCSS(variables);
+      const css = figmation.generateCSS(variables, 'default');
       expect(css).toContain('/* Colors */');
       expect(css).toContain('/* Layout */');
       expect(css).toContain('--color-accent: #00FF00');
@@ -85,24 +93,20 @@ describe('Figmation', () => {
     });
 
     test('should handle file write errors', async () => {
-      const figmation = new Figmation({
-        outputPath: '/invalid/path',
-        filename: 'test.css',
-      });
-
-      const variables: Variable[] = [
+      const variables = [
         {
           id: '1',
-          name: 'Test',
+          name: 'test',
           value: '#000',
           scope: 'ALL_FILLS' as VariableScope,
           hidden: false,
         },
       ];
 
-      await expect(figmation.writeCSS(variables)).rejects.toThrow(
-        /ENOENT|no such file or directory/,
-      );
+      const figmation = new Figmation();
+      await expect(figmation.writeCSS(variables, 'default', { 
+        filePath: 'error/test/file.css'  // Specify a non-existent directory path
+      })).rejects.toThrow();
     });
   });
 
@@ -142,7 +146,7 @@ describe('Figmation', () => {
         },
       ];
 
-      const css = figmation.generateCSS(variables);
+      const css = figmation.generateCSS(variables, 'default');
       expect(css).toContain('/* Colors */');
       expect(css).not.toContain('--color-hidden-color');
       expect(css).toContain('--color-visible-color: #00FF00');
@@ -153,15 +157,15 @@ describe('Figmation', () => {
     const testOutputPath = './test-output';
     const testFilename = 'test-variables.css';
 
-    beforeAll(() => {
-      // Ensure test directory exists
+    beforeEach(() => {
+      // Ensure test directory exists before each test
       if (!existsSync(testOutputPath)) {
         mkdirSync(testOutputPath, { recursive: true });
       }
     });
 
-    afterAll(() => {
-      // Clean up test directory
+    afterEach(() => {
+      // Clean up after each test
       if (existsSync(testOutputPath)) {
         rmSync(testOutputPath, { recursive: true, force: true });
       }
@@ -183,7 +187,9 @@ describe('Figmation', () => {
         },
       ];
 
-      await figmation.writeCSS(variables);
+      await figmation.writeCSS(variables, 'default', {
+        filePath: join(testOutputPath, testFilename)
+      });
 
       const filePath = join(testOutputPath, testFilename);
       expect(existsSync(filePath)).toBe(true);
@@ -352,7 +358,7 @@ describe('Figmation', () => {
         },
       ];
 
-      const css = figmation.generateCSS(variables);
+      const css = figmation.generateCSS(variables, 'default');
       expect(css).toContain('/* Font */');
       expect(css).toContain('/* Spacing */');
       expect(css).toContain('/* Effect */');
@@ -407,7 +413,7 @@ describe('Figmation', () => {
         },
       ];
 
-      const css = figmation.generateCSS(variables);
+      const css = figmation.generateCSS(variables, 'default');
       expect(css).toContain('--font-size-body');
       expect(css).toContain('--color-primary');
     });
@@ -424,7 +430,7 @@ describe('Figmation', () => {
         },
       ];
 
-      const css = figmation.generateCSS(variables, false);
+      const css = figmation.generateCSS(variables, 'default');
       expect(css).not.toContain('Hidden/Variable');
     });
   });

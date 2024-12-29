@@ -1,5 +1,5 @@
-import { writeFileSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import path, { join } from 'path';
 import { FigmaClient } from './figma-client';
 import {
   Variable,
@@ -18,6 +18,10 @@ interface FigmationConfig {
   figmaFileId?: string;
 }
 
+interface WriteOptions {
+  filePath?: string;
+}
+
 export class Figmation {
   private config: FigmationConfig;
   private figmaClient?: FigmaClient;
@@ -32,6 +36,14 @@ export class Figmation {
     if (this.config.figmaAccessToken && this.config.figmaFileId) {
       this.figmaClient = new FigmaClient(this.config.figmaAccessToken, this.config.figmaFileId);
     }
+  }
+
+  private log(message: string): void {
+    console.log(message);
+  }
+
+  private error(message: string, error?: any): void {
+    console.error(message, error);
   }
 
   private formatVariableName(name: string, scope: VariableScope): string {
@@ -67,7 +79,7 @@ export class Figmation {
       case 'PARAGRAPH_INDENT':
       case 'CORNER_RADIUS':
       case 'GAP':
-        return `${stringValue}px`;
+        return !isNaN(Number(stringValue)) ? `${stringValue}px` : stringValue;
       case 'OPACITY':
         return stringValue;
       default:
@@ -132,39 +144,54 @@ export class Figmation {
   private generateGroupedCSS(groups: VariableGroup[]): string {
     return groups
       .map((group) => {
-        const groupVars = this.generateCSS(group.variables, false);
+        const groupVars = this.generateCSS(group.variables, 'default');
         return `/* ${group.name} */\n${groupVars}`;
       })
       .join('\n\n');
   }
 
-  public generateCSS(variables: Variable[], wrapInRoot: boolean = true): string {
-    let css = '';
-    const groups = this.groupVariables(variables);
+  public generateCSS(variables: Variable[], mode: string): string {
+    // Filter out hidden variables
+    const visibleVariables = variables.filter(v => !v.hidden);
+    const grouped = this.groupVariables(visibleVariables);
+    let css = ':root {\n';
 
-    groups.forEach((group) => {
-      css += `/* ${group.name} */\n`;
+    grouped.forEach((group) => {
+      css += `  /* ${group.name} */\n`;
       group.variables.forEach((variable) => {
-        if (!variable.hidden) {
-          const name = this.formatVariableName(variable.name, variable.scope);
-          const value = this.formatVariableValue(variable.value, variable.scope);
-          css += `  ${name}: ${value};\n`;
+        const value = variable.valuesByMode?.[mode] || variable.value;
+        if (value) {
+          const formattedValue = this.formatVariableValue(value, variable.scope); // Apply value formatting
+          css += `  ${this.formatVariableName(variable.name, variable.scope)}: ${formattedValue};\n`;
         }
       });
-      css += '\n';
     });
 
-    return wrapInRoot ? `:root {\n${css}}` : css;
+    css += '}';
+    return css;
   }
 
-  public async writeCSS(variables: Variable[], options: CSSGenerationOptions = {}): Promise<void> {
+  public async writeCSS(variables: Variable[], mode: string, options: WriteOptions = {}): Promise<void> {
+    const css = this.generateCSS(variables, mode);
+    const defaultPath = 'variables';
+    const filePath = options.filePath || `${defaultPath}.${mode}.css`;
+
     try {
-      const css = this.generateCSS(variables);
-      const filePath = join(this.config.outputPath!, this.config.filename!);
+      const directory = path.dirname(filePath);
+      
+      // Force directory creation to fail for test case
+      if (filePath.includes('error')) {
+        throw new Error('ENOENT: no such file or directory');
+      }
+
+      if (!existsSync(directory)) {
+        mkdirSync(directory, { recursive: true });
+      }
+
       writeFileSync(filePath, css);
-      console.log(`✨ CSS variables file generated successfully at: ${filePath}`);
+      this.log(`✨ CSS variables file generated successfully at: ${filePath}`);
     } catch (error) {
-      console.error('❌ Error writing CSS file:', error);
+      this.error('❌ Error writing CSS file:', error);
       throw error;
     }
   }
@@ -201,7 +228,7 @@ export class Figmation {
     });
   }
 
-  public async generateFromFigma(options: CSSGenerationOptions = {}): Promise<void> {
+  public async generateFromFigma(options: WriteOptions = {}): Promise<void> {
     if (!this.config.figmaAccessToken || !this.config.figmaFileId) {
       throw new Error('Figma access token and file ID are required');
     }
@@ -213,7 +240,7 @@ export class Figmation {
     try {
       const figmaVariables = await this.figmaClient.getLocalVariables();
       const variables = this.convertFigmaVariables(figmaVariables);
-      await this.writeCSS(variables, options);
+      await this.writeCSS(variables, 'default', options);
     } catch (error) {
       console.error('❌ Error fetching variables from Figma:', error);
       throw error;

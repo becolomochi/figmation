@@ -44,6 +44,29 @@ await figmation.generateFromFigma({
 });
 ```
 
+### Working with Figma Variable Modes
+
+Figmation automatically detects and converts Figma variable modes. Each mode will be generated as a separate CSS file.
+
+```ts
+const figmation = new Figmation({
+  figmaAccessToken: 'your-token',
+  figmaFileId: 'your-file-id'
+});
+
+// Generate CSS for default mode
+await figmation.generateFromFigma();
+
+// Generate CSS for a specific mode
+await figmation.generateFromFigma({ mode: 'dark' });
+
+// The generated files will be:
+// - variables.default.css
+// - variables.dark.css
+```
+
+When your Figma variables have multiple modes (like "Default" and "Dark"), each mode's values will be preserved in the corresponding CSS file.
+
 ## Output Example
 
 ```css

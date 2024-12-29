@@ -29,6 +29,7 @@ export interface Variable {
   id: string;
   name: string;
   value: any;
+  valuesByMode?: { [key: string]: any };
   scope: VariableScope;
   hidden: boolean;
 }
